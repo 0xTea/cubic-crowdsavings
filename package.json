@@ -1,0 +1,29 @@
+{
+  "name": "cubic-crowdsavings",
+  "version": "1.0.0",
+  "description": "crowd savings decentralised application ",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TshepoMokoena/cubic-crowdsavings.git"
+  },
+  "keywords": [
+    "blockchain",
+    "ethereum"
+  ],
+  "author": "Tshepo Mokoena",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TshepoMokoena/cubic-crowdsavings/issues"
+  },
+  "homepage": "https://github.com/TshepoMokoena/cubic-crowdsavings#readme",
+  "dependencies": {
+    "openzeppelin-solidity": "3.1.0"
+  }
+}
