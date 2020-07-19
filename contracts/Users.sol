@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.6.0;
 
 contract Users {
     // data structure that stores a user
@@ -76,7 +76,7 @@ contract Users {
 
         // associating the user wallet address with the new ID
         usersIds[_wAddr] = users.length;
-        uint newUserId = users.length++;
+        uint newUserId = users.length+1;
 
         // storing the new user details
         users[newUserId] = User({
