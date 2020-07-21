@@ -4,6 +4,7 @@ pragma solidity >=0.5.4 <0.7.0;
 // Importing OpenZeppelin's SafeMath Implementation
 import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
 
+/** @title CrowdSaving */
 contract CrowdSaving {
     using SafeMath for uint256;
 
@@ -16,7 +17,7 @@ contract CrowdSaving {
         address projectStarter,
         string projectTitle,
         string projectDesc,
-        uint   contributorsCount,
+        int   contributorsCount,
         uint256 deadline,
         uint256 goalAmount
     );
@@ -30,10 +31,10 @@ contract CrowdSaving {
     function startProject(
         string calldata title,
         string calldata description,
-        uint  numberContributors,
+        int  numberContributors,
         uint durationInDays,
         uint amountToRaise
-    ) external {
+        ) external {
         uint raiseUntil = now.add(durationInDays.mul(1 days));
         Project newProject = new Project(msg.sender, title, description, raiseUntil, amountToRaise,numberContributors);
         projects.push(newProject);
@@ -71,15 +72,16 @@ contract Project {
     address payable public creator;
     uint public amountGoal; // required to reach at least this much, else everyone gets refund
     address[]  public contributors;
-    uint public numberContributors;
-    uint public distributedAmount;
+    int public numberContributors;
+    uint256 public distributedAmount;
     uint public completeAt;
     uint256 public currentBalance;
     uint public raiseBy;
-    uint contributorsCount  = 0;
+    int contributorsCount  = 0;
     string public title;
     string public description;
     State public state = State.Crowding; // initialize on create
+    
     mapping (address => uint) public contributions;
 
     // Event that will be emitted whenever funding will be received
@@ -93,18 +95,18 @@ contract Project {
         _;
     }
 
-    // Modifier to check if the function caller is the project creator
-    modifier isCreator() {
-        require(msg.sender == creator);
-        _;
-    }
+    // // Modifier to check if the function caller is the project creator
+    // modifier isCreator() {
+    //     require(msg.sender == creator);
+    //     _;
+    // }
 
     constructor
     (
         address payable projectStarter,
         string memory projectTitle,
         string memory projectDesc,
-        uint    projectnumberContributors,
+        int   projectnumberContributors,
         uint fundRaisingDeadline,
         uint goalAmount
     ) public {
@@ -115,28 +117,26 @@ contract Project {
         raiseBy = fundRaisingDeadline;
         currentBalance = 0;
         numberContributors = projectnumberContributors;
-        contributors = new address[](10);
+        contributors = new address[](projectnumberContributors);
     }
 
     
     /** @dev Function to join a certain project limited to contributors.
       */
     function join () external inState(State.Crowding){
-        require(msg.sender != creator);
-        require(contributorsCount <= numberContributors);
-        contributors[contributorsCount] = msg.sender;
-        contributorsCount++;
-        if(contributorsCount == numberContributors){
+        require(msg.sender != creator,'cannot  join as project owner');
+        require(contributorsCount <= numberContributors,'Max number of contributors has been met for project');
+        if(contributorsCount <= numberContributors){
+            contributors[contributorsCount] = msg.sender;
+            contributorsCount++;
+        } else {
             state = State.Fundraising;
         }
-
     }
-
 
     /** @dev Function to fund a certain project.
       */
     function contribute() external inState(State.Fundraising) payable {
-        require(msg.sender != creator);
         contributions[msg.sender] = contributions[msg.sender].add(msg.value);
         currentBalance = currentBalance.add(msg.value);
         emit FundingReceived(msg.sender, msg.value, currentBalance);
@@ -170,6 +170,7 @@ contract Project {
         }
 
         return false;
+        
     }
 
     /** @dev Function to retrieve donated amount when a project expires.
