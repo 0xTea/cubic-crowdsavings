@@ -17,6 +17,7 @@ contract CrowdSaving {
         address projectStarter,
         string projectTitle,
         string projectDesc,
+        uint256 distributedAmount,
         int   contributorsCount,
         uint256 deadline,
         uint256 goalAmount
@@ -35,17 +36,19 @@ contract CrowdSaving {
         uint durationInDays,
         uint amountToRaise
         ) external {
-        uint raiseUntil = now.add(durationInDays.mul(365 days));
-        Project newProject = new Project(msg.sender, title, description, raiseUntil, amountToRaise,numberContributors);
+        uint raiseUntil = now.add(durationInDays.mul(1 days));
+        Project newProject = new Project(msg.sender, title, description,numberContributors, raiseUntil, amountToRaise);
         projects.push(newProject);
+        
         emit ProjectStarted(
             address(newProject),
             msg.sender,
             title,
             description,
+            newProject.distributedAmount(),
+            numberContributors,
             raiseUntil,
-            amountToRaise,
-            numberContributors
+            amountToRaise
         );
     }                                                                                                                                   
 
@@ -57,7 +60,7 @@ contract CrowdSaving {
     }
 }
 
-
+/** @title Project */
 contract Project {
     using SafeMath for uint256;
     
@@ -68,6 +71,7 @@ contract Project {
         Expired,
         Successful
     }
+    
     // State variables
     address payable public creator;
     uint public amountGoal; // required to reach at least this much, else everyone gets refund
@@ -77,6 +81,7 @@ contract Project {
     uint public completeAt;
     uint256 public currentBalance;
     uint public raiseBy;
+    address[] public contributors;
     int contributorsCount  = 0;
     string public title;
     string public description;
@@ -119,8 +124,8 @@ contract Project {
         raiseBy = fundRaisingDeadline;
         currentBalance = 0;
         numberContributors = projectnumberContributors;
-        distributedAmount = amountGoal / numberContributors;
-        contributors = new address[](projectnumberContributors);
+        distributedAmount = amountGoal / uint(numberContributors);
+        contributors = new address[](uint256(projectnumberContributors));
     }
 
     
@@ -130,7 +135,7 @@ contract Project {
         require(msg.sender != creator,'cannot  join as project owner');
         require(contributorsCount <= numberContributors,'Max number of contributors has been met for project');
         if(contributorsCount <= numberContributors){
-            contributors[contributorsCount] = msg.sender;
+            contributors[uint256(contributorsCount)] = msg.sender;
             contributorsCount++;
             contributions_count[msg.sender] = 0;// initialize contribtions count to zero
         } else {
@@ -142,9 +147,9 @@ contract Project {
       */
     function contribute() external inState(State.Fundraising) payable {
         require(distributedAmount == msg.value,'contribution must match distributed amount');
-        require(contributions_count[msg.sender] <= 5,'reached max number of contributions');
+        require(contributions_count[msg.sender] >= 5,'reached max number of contributions');
         contributions[msg.sender] = contributions[msg.sender].add(msg.value);
-        contributions_count[msg.sender] = contributions_count[msg.sender].add(1);
+        contributions_count[msg.sender] = contributions_count[msg.sender] + 1;
         currentBalance = currentBalance.add(msg.value);
         emit FundingReceived(msg.sender, msg.value, currentBalance);
         checkIfFundingCompleteOrExpired();
