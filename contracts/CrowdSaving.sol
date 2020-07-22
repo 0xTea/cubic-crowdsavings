@@ -35,7 +35,7 @@ contract CrowdSaving {
         uint durationInDays,
         uint amountToRaise
         ) external {
-        uint raiseUntil = now.add(durationInDays.mul(1 days));
+        uint raiseUntil = now.add(durationInDays.mul(365 days));
         Project newProject = new Project(msg.sender, title, description, raiseUntil, amountToRaise,numberContributors);
         projects.push(newProject);
         emit ProjectStarted(
@@ -71,7 +71,7 @@ contract Project {
     // State variables
     address payable public creator;
     uint public amountGoal; // required to reach at least this much, else everyone gets refund
-    address[]  public contributors;
+
     int public numberContributors;
     uint256 public distributedAmount;
     uint public completeAt;
@@ -83,6 +83,8 @@ contract Project {
     State public state = State.Crowding; // initialize on create
     
     mapping (address => uint) public contributions;
+
+    mapping (address => int) public contributions_count; //mapping of address and contribution count
 
     // Event that will be emitted whenever funding will be received
     event FundingReceived(address contributor, uint amount, uint currentTotal);
@@ -117,6 +119,7 @@ contract Project {
         raiseBy = fundRaisingDeadline;
         currentBalance = 0;
         numberContributors = projectnumberContributors;
+        distributedAmount = amountGoal / numberContributors;
         contributors = new address[](projectnumberContributors);
     }
 
@@ -129,6 +132,7 @@ contract Project {
         if(contributorsCount <= numberContributors){
             contributors[contributorsCount] = msg.sender;
             contributorsCount++;
+            contributions_count[msg.sender] = 0;// initialize contribtions count to zero
         } else {
             state = State.Fundraising;
         }
@@ -137,7 +141,10 @@ contract Project {
     /** @dev Function to fund a certain project.
       */
     function contribute() external inState(State.Fundraising) payable {
+        require(distributedAmount == msg.value,'contribution must match distributed amount');
+        require(contributions_count[msg.sender] <= 5,'reached max number of contributions');
         contributions[msg.sender] = contributions[msg.sender].add(msg.value);
+        contributions_count[msg.sender] = contributions_count[msg.sender].add(1);
         currentBalance = currentBalance.add(msg.value);
         emit FundingReceived(msg.sender, msg.value, currentBalance);
         checkIfFundingCompleteOrExpired();
