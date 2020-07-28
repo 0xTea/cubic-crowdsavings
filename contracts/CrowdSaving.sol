@@ -3,6 +3,7 @@
 pragma solidity >=0.5.4 <0.7.0;
 // Importing OpenZeppelin's SafeMath Implementation
 import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
+
 import "./Project.sol";
 /** @title CrowdSaving */
 contract CrowdSaving {
@@ -16,13 +17,15 @@ contract CrowdSaving {
     event ProjectStarted(
         address contractAddress,
         address projectStarter,
-        string projectTitle,
-        string projectDesc,
+        string  projectTitle,
+        string  projectDesc,
         uint256 distributedAmount,
         int   contributorsCount,
         uint256 deadline,
         uint256 goalAmount
     );
+    event LogFailure(string message);
+    event ProjectJoined(int message);
 
     /** @dev Function to start a new project.
       * @param title Title of the project to be created
@@ -31,19 +34,17 @@ contract CrowdSaving {
       * @param amountToRaise Project goal in wei
       */
        function startProject(
-        string calldata title,
-        string calldata description,
+        string  calldata title,
+        string  calldata description,
         int  numberContributors,
         uint durationInDays,
         uint amountToRaise
         ) external  payable returns (address projectAddress)  {
-            // solium-disable-next-line security/no-block-members
             uint raiseUntil = now.add(durationInDays.mul(1 days));
             Project newProject = new Project(msg.sender, title, description,numberContributors, raiseUntil, amountToRaise);
-            projects[numOfProjects] = newProject;
+            projects[numOfProjects] = address(newProject);
             numOfProjects++;
-            emit ProjectStarted(
-                address(newProject),
+            emit ProjectStarted(address(newProject),
                 msg.sender,
                 title,
                 description,
@@ -54,5 +55,13 @@ contract CrowdSaving {
                 );
             return address(newProject);
     }
+    function joinProject(address _projectAddress) public returns (bool successful) {
+        Project deployedProject = Project(_projectAddress);
+        if (deployedProject.fundingHub() == address(0)) {
+            emit LogFailure("Project contract not found at address");
+        }
+        deployedProject.join(msg.sender);
+        emit ProjectJoined(deployedProject.contributorsCount());
+        return true;
+    }
 }
-

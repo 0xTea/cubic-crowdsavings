@@ -13,22 +13,19 @@ contract Project {
         Expired,
         Successful
     }
-    
     // State variables
     address payable public creator;
     uint public amountGoal; // required to reach at least this much, else everyone gets refund
-
+    address public fundingHub;
     int public numberContributors;
     uint256 public distributedAmount;
     uint public completeAt;
     uint256 public currentBalance;
     uint public raiseBy;
-    address[] public contributors;
-    int contributorsCount  = 0;
+    int public contributorsCount  = 0;
     string public title;
     string public description;
     State public state = State.Crowding; // initialize on create
-    
     mapping (address => uint) public contributions;
 
     mapping (address => int) public contributions_count; //mapping of address and contribution count
@@ -53,8 +50,8 @@ contract Project {
     constructor
     (
         address payable projectStarter,
-        string memory projectTitle,
-        string memory projectDesc,
+        string memory  projectTitle,
+        string  memory projectDesc,
         int   projectnumberContributors,
         uint fundRaisingDeadline,
         uint goalAmount
@@ -65,24 +62,25 @@ contract Project {
         amountGoal = goalAmount;
         raiseBy = fundRaisingDeadline;
         currentBalance = 0;
+        fundingHub = msg.sender;
         numberContributors = projectnumberContributors;
         distributedAmount = amountGoal / uint(numberContributors);
-        contributors = new address[](uint256(projectnumberContributors));
     }
 
     
     /** @dev Function to join a certain project limited to contributors.
       */
-    function join () external inState(State.Crowding){
-        require(msg.sender != creator,'cannot  join as project owner');
+    function join (address _contributor) external inState(State.Crowding) returns  (bool successful){
+        require(_contributor != creator,'cannot  join as project owner');
         require(contributorsCount <= numberContributors,'Max number of contributors has been met for project');
         if(contributorsCount <= numberContributors){
-            contributors[uint256(contributorsCount)] = msg.sender;
             contributorsCount++;
-            contributions_count[msg.sender] = 0;// initialize contribtions count to zero
+            contributions_count[_contributor] = 0;// initialize contribtions count to zero
+            
         } else {
             state = State.Fundraising;
         }
+        return true;
     }
 
     /** @dev Function to fund a certain project.
@@ -148,7 +146,7 @@ contract Project {
     function getDetails() public view returns 
     (
         address payable projectStarter,
-        string memory projectTitle,
+        string  memory projectTitle,
         string memory projectDesc,
         uint256 deadline,
         State currentState,
