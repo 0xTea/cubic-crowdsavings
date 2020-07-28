@@ -24,6 +24,7 @@ contract CrowdSaving {
         uint256 deadline,
         uint256 goalAmount
     );
+    
     event LogFailure(string message);
     event ProjectJoined(int message);
 
@@ -40,7 +41,7 @@ contract CrowdSaving {
         uint durationInDays,
         uint amountToRaise
         ) external  payable returns (address projectAddress)  {
-            uint raiseUntil = now.add(durationInDays.mul(1 days));
+            uint raiseUntil = durationInDays;
             Project newProject = new Project(msg.sender, title, description,numberContributors, raiseUntil, amountToRaise);
             projects[numOfProjects] = address(newProject);
             numOfProjects++;
@@ -55,13 +56,23 @@ contract CrowdSaving {
                 );
             return address(newProject);
     }
-    function joinProject(address _projectAddress) public returns (bool successful) {
-        Project deployedProject = Project(_projectAddress);
-        if (deployedProject.fundingHub() == address(0)) {
-            emit LogFailure("Project contract not found at address");
-        }
-        deployedProject.join(msg.sender);
-        emit ProjectJoined(deployedProject.contributorsCount());
-        return true;
-    }
+    
+      function joinProject(address _projectAddress) public returns (bool successful) { 
+            Project deployedProject = Project(_projectAddress);
+            if (deployedProject.fundingHub() == address(0)) {
+                emit LogFailure("Project contract not found at address");
+            }
+             deployedProject.join(msg.sender);
+             emit ProjectJoined(deployedProject.contributorsCount());
+             return true;
+      }
+      
+      function contribute(address _projectAddress) public payable returns (bool successful) { 
+            Project deployedProject = Project(_projectAddress);
+            if (deployedProject.fundingHub() == address(0)) {
+                emit LogFailure("Project contract not found at address");
+            }
+             deployedProject.contribute{value:msg.value}(msg.sender);
+             return true;
+         }
 }

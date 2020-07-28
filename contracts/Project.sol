@@ -13,6 +13,7 @@ contract Project {
         Expired,
         Successful
     }
+    
     // State variables
     address payable public creator;
     uint public amountGoal; // required to reach at least this much, else everyone gets refund
@@ -76,7 +77,6 @@ contract Project {
         if(contributorsCount <= numberContributors){
             contributorsCount++;
             contributions_count[_contributor] = 0;// initialize contribtions count to zero
-            
         } else {
             state = State.Fundraising;
         }
@@ -85,13 +85,13 @@ contract Project {
 
     /** @dev Function to fund a certain project.
       */
-    function contribute() external inState(State.Fundraising) payable {
+    function contribute (address _contributor) external inState(State.Fundraising)  payable  {
         require(distributedAmount == msg.value,'contribution must match distributed amount');
-        require(contributions_count[msg.sender] >= 5,'reached max number of contributions');
-        contributions[msg.sender] = contributions[msg.sender].add(msg.value);
-        contributions_count[msg.sender] = contributions_count[msg.sender] + 1;
+        require(contributions_count[_contributor] >= 5,'reached max number of contributions');
+        contributions[_contributor] = contributions[_contributor].add(msg.value);
+        contributions_count[_contributor] = contributions_count[_contributor] + 1;
         currentBalance = currentBalance.add(msg.value);
-        emit FundingReceived(msg.sender, msg.value, currentBalance);
+        emit FundingReceived(_contributor, msg.value, currentBalance);
         checkIfFundingCompleteOrExpired();
     }
 
