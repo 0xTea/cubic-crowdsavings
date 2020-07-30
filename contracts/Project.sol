@@ -1,7 +1,6 @@
 pragma solidity >=0.5.4 <0.7.0;
 // Importing OpenZeppelin's SafeMath Implementation
 import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
-
 /** @title Project */
 contract Project {
     using SafeMath for uint256;
@@ -13,7 +12,6 @@ contract Project {
         Expired,
         Successful
     }
-    
     // State variables
     address payable public creator;
     uint public amountGoal; // required to reach at least this much, else everyone gets refund
@@ -68,18 +66,15 @@ contract Project {
         distributedAmount = amountGoal / uint(numberContributors);
     }
 
-    
+
     /** @dev Function to join a certain project limited to contributors.
       */
     function join (address _contributor) external inState(State.Crowding) returns  (bool successful){
         require(_contributor != creator,'cannot  join as project owner');
         require(contributorsCount <= numberContributors,'Max number of contributors has been met for project');
-        if(contributorsCount <= numberContributors){
-            contributorsCount++;
-            contributions_count[_contributor] = 0;// initialize contribtions count to zero
-        } else {
-            state = State.Fundraising;
-        }
+        contributorsCount++;
+        contributions_count[_contributor] = 0;
+        state = State.Fundraising;
         return true;
     }
 
