@@ -33,13 +33,13 @@ contract CrowdSaving is ICrowdSaving {
    
     event ProjectJoined(int message);
    
-       function startProject(
-        string  calldata title,
-        string  calldata description,
+  function startProject (
+        string  memory title,
+        string  memory description,
         int  numberContributors,
         uint durationInDays,
         uint amountToRaise
-        ) external  payable returns (address projectAddress)  {
+        ) public payable  override returns (address projectAddress)  {
             uint raiseUntil = durationInDays;
             Project newProject = new Project(msg.sender, title, description,numberContributors, raiseUntil, amountToRaise);
             projects[numOfProjects] = address(newProject);
@@ -55,8 +55,8 @@ contract CrowdSaving is ICrowdSaving {
                 );
             return address(newProject);
     }
-    
-      function joinProject(address _projectAddress) public returns (bool successful) { 
+        // function utterance() public override returns (bytes32) { return "miaow"; }
+      function joinProject(address _projectAddress) public override returns (bool successful) { 
             Project deployedProject = Project(_projectAddress);
             if (deployedProject.fundingHub() == address(0)) {
                 emit LogFailure("Project contract not found at address");
@@ -66,12 +66,13 @@ contract CrowdSaving is ICrowdSaving {
              return true;
       }
       
-      function contribute(address _projectAddress) public payable returns (bool successful) { 
+      function contribute(address _projectAddress) public payable override returns (bool successful) { 
             Project deployedProject = Project(_projectAddress);
             if (deployedProject.fundingHub() == address(0)) {
                 emit LogFailure("Project contract not found at address");
             }
              deployedProject.contribute{value:msg.value}(msg.sender);
              return true;
-        }
+         }
+    }
 }
